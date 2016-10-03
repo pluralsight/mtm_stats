@@ -1,0 +1,10 @@
+# Ignore these auto-generated files:
+*.pyc
+*.pyo
+*~
+dist
+build
+zips
+mtm_stats.egg-info
+MANIFEST
+dnmPrivate
