@@ -8,3 +8,4 @@ zips
 mtm_stats.egg-info
 MANIFEST
 dnmPrivate
+mtm_stats/generated
