@@ -1,41 +1,40 @@
-''''''
+'''Test it all'''
 
-import time
 import mtm_stats
 import numpy as np
 
-def generate_test_set():
-    '''Generate a test set to pass to mtm_stats
-       (be aware that setA and setB may not match exactly to the setA
-        and setB computed in )'''
-    np.random.seed(0)
-    sizeA, sizeB = 10000, 10000000
-    setA_full = ['a{}'.format(i) for i in range(sizeA)]
-    setB_full = ['b{}'.format(i) for i in range(sizeB)]
-    num_connections = 1000000
-    divsum = lambda x: x * 1. / x.sum()
-    weightsA = divsum(np.random.beta(0.2, 1, size=sizeA))
-    weightsB = divsum(np.random.beta(0.2, 1, size=sizeB))
-    a_inds = np.random.choice(sizeA, num_connections, p=weightsA)
-    b_inds = np.random.choice(sizeB, num_connections, p=weightsB)
-    a_list = [setA_full[i] for i in a_inds]
-    b_list = [setB_full[i] for i in b_inds]
-    connections = zip(a_list, b_list)
-    return connections
+TEST_SET_1 = [('a1', 'b1'),
+              ('a1', 'b2'),
+              ('a1', 'b3'),
+              ('a2', 'b1'),
+              ('a2', 'b2'),
+              ('a3', 'b3'),
+              ('a4', 'b9'),]
 
+def test_mtm_stats_1():
+    bcd, scd = mtm_stats.mtm_stats(TEST_SET_1)
+    assert bcd == {'a1': 3, 'a3': 1, 'a2': 2, 'a4': 1}
+    assert scd == {('a1', 'a2'): (2, 3), ('a1', 'a3'): (1, 3)}
 
-def test_1():
-    t = time.time()
-    connections = generate_test_set()
-    generate_time = time.time()-t
-    print connections
-    
-    t = time.time()
-    bc_dict, sc_dict = mtm_stats.mtm_stats(connections)
-    process_time = time.time()-t
-    print bc_dict
-    print sc_dict
-    print generate_time, process_time
+def test_get_Jaccard_index_1():
+    bcd, ji = mtm_stats.get_Jaccard_index(TEST_SET_1)
+    assert bcd == {'a1': 3, 'a3': 1, 'a2': 2, 'a4': 1}
+    assert ji == {('a1', 'a2'): 2./3, ('a1', 'a3'): 1./3}
+
+def timing_test_1():
+    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=100,
+                                                     sizeB = 10000,
+                                                     num_connections = 10000,)
+    assert mt < 1
+
+def timing_test_2():
+    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=10000,
+                                                     sizeB = 10000000,
+                                                     num_connections = 1000000,)
+    assert mt < 100, 'mtm_stats is too slow'
 
 if __name__ == '__main__':
-    test_1()
+    test_mtm_stats_1()
+    test_get_Jaccard_index_1()
+    timing_test_1()
+    timing_test_2()

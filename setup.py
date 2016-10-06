@@ -13,7 +13,7 @@ setup(
     scripts=[],
     license='LICENSE.txt',
     description='Highly efficient set statistics about many-to-many relationships',
-    long_description=open('README.txt').read(),
+    long_description=open('README.md').read(),
     install_requires=['Cpyx>=0.2.2',
                       'numpy>=1.0',
                      ],
