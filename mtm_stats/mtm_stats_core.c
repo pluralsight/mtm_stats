@@ -152,7 +152,7 @@ int compute_intersection_and_union_counts(SparseBlockArray * sba_rows,
     int j;
     bool result;
     int num_sparse_counts = 0;
-    for(j = j+1; j < num_rows; j++) {
+    for(j = i+1; j < num_rows; j++) {
         result = compute_intersection_and_union_count(sba_rows,
                                                       chunk_length,
                                                       i,

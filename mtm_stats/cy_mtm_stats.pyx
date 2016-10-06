@@ -6,7 +6,6 @@ from cython.parallel cimport parallel
 from cython.parallel import prange
 cimport openmp
 
-
 ctypedef unsigned int UINT32
 ctypedef unsigned long int UINT64
 
@@ -119,19 +118,21 @@ def cy_mtm_stats(sba_list, chunk_length, cutoff=0):
         sparse_counts_pointer_arr[i] = <SparseSetCounts*> sparse_counts_cn.data
     
     cdef int num_sparse_counts
+    cdef int thread_number
     sparse_counts_list = [None] * num_items
     for i in prange(num_items_c, nogil=True, chunksize=1, num_threads=num_threads, schedule='static'):
+        thread_number = openmp.omp_get_thread_num()
         num_sparse_counts = compute_intersection_and_union_counts(
                                 sba_pointer,
                                 chunk_length_c,
                                 i,
                                 num_items_c,
-                                sparse_counts_pointer_arr[openmp.omp_get_thread_num()],
+                                sparse_counts_pointer_arr[thread_number],
                                 cutoff_c
                             )
         
         with gil:
-            sparse_counts_list[i] = sparse_counts[i][:num_sparse_counts]
+            sparse_counts_list[i] = sparse_counts[thread_number][:num_sparse_counts]
 
     # Collect the results
     all_sparse_counts = np.concatenate(sparse_counts_list)

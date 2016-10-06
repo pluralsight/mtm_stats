@@ -1,9 +1,41 @@
 ''''''
 
+import time
 import mtm_stats
+import numpy as np
+
+def generate_test_set():
+    '''Generate a test set to pass to mtm_stats
+       (be aware that setA and setB may not match exactly to the setA
+        and setB computed in )'''
+    np.random.seed(0)
+    sizeA, sizeB = 10000, 10000000
+    setA_full = ['a{}'.format(i) for i in range(sizeA)]
+    setB_full = ['b{}'.format(i) for i in range(sizeB)]
+    num_connections = 1000000
+    divsum = lambda x: x * 1. / x.sum()
+    weightsA = divsum(np.random.beta(0.2, 1, size=sizeA))
+    weightsB = divsum(np.random.beta(0.2, 1, size=sizeB))
+    a_inds = np.random.choice(sizeA, num_connections, p=weightsA)
+    b_inds = np.random.choice(sizeB, num_connections, p=weightsB)
+    a_list = [setA_full[i] for i in a_inds]
+    b_list = [setB_full[i] for i in b_inds]
+    connections = zip(a_list, b_list)
+    return connections
+
 
 def test_1():
-    pass
+    t = time.time()
+    connections = generate_test_set()
+    generate_time = time.time()-t
+    print connections
+    
+    t = time.time()
+    bc_dict, sc_dict = mtm_stats.mtm_stats(connections)
+    process_time = time.time()-t
+    print bc_dict
+    print sc_dict
+    print generate_time, process_time
 
 if __name__ == '__main__':
     test_1()
