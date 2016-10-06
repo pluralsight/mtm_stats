@@ -14,7 +14,11 @@ setup(
     license='LICENSE.txt',
     description='Highly efficient set statistics about many-to-many relationships',
     long_description=open('README.txt').read(),
-    install_requires=[
-                      
+    install_requires=['Cpyx>=0.2.2',
+                      'numpy>=1.0',
                      ],
+    extras_require = {
+                      'visualize_test':  ["render_d3_fdg>=v0.2.1.6"],
+                     }
+
 )
