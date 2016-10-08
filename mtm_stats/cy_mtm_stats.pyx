@@ -1,6 +1,7 @@
 cimport c_python
 cimport c_numpy
 import numpy as np
+import multiprocessing
 
 from cython.parallel cimport parallel
 from cython.parallel import prange
@@ -84,7 +85,7 @@ def cy_mtm_stats(sba_list, chunk_length, cutoff=0):
         set_SBA_from_py_dict(sba_pointer, sba_list[i], sba_ind=i)
     
     # Define common vars used below
-    cdef int num_threads = 4
+    cdef int num_threads = multiprocessing.cpu_count()
     cdef int num_items_c = num_items
     cdef int chunk_length_c = chunk_length
     cdef int cutoff_c = cutoff

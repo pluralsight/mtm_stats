@@ -30,11 +30,16 @@ def generate_test_set(sizeA=10000,
 def run_timing_test(*args, **kwds):
     '''Generate a test set and run mtm_stats
        Time both steps and print the output
-       kwds: verbose=True -> print the test set and the result from mtm_stats
+       kwds:
+           verbose=True -> print the test set and the result from mtm_stats
+           chunk_length_64=True -> passed to mtm_stats
+           cutoff=0 -> passed to mtm_stats
        
        all other args and kwds are passed to generate_test_set
        '''
-    verbose = kwds.pop('verbose', True)
+    verbose = kwds.pop('verbose', False)
+    chunk_length_64 = kwds.pop('chunk_length_64', 1)
+    cutoff = kwds.pop('cutoff', 0)
     
     t = time.time()
     connections = generate_test_set(*args, **kwds)
