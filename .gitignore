@@ -1,6 +1,8 @@
 # Ignore these auto-generated files:
 *.pyc
 *.pyo
+*.so
+*.pyd
 *~
 dist
 build
@@ -8,4 +10,4 @@ zips
 mtm_stats.egg-info
 MANIFEST
 dnmPrivate
-mtm_stats/generated
+cy_mtm_stats.c

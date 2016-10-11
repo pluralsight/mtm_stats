@@ -1,7 +1,11 @@
 '''The main script'''
+
+# To update with any Cython changes, just run:
+# python setup.py build_ext --inplace
+
 import numpy as np
 from sparse_block_array import sba_compress_64
-import cython_utils
+import cy_mtm_stats
 
 def extract_sets_from_connections(connections):
     '''Get two sorted sets from the connections tuples,
@@ -59,7 +63,7 @@ def mtm_stats_raw(connections, chunk_length_64=1, cutoff=0):
     #sba_list = [sba_compress_64(i, chunk_length_64)
     #            for i in convert_connections_to_binary(connections, setA, setB)]
     sba_list = convert_connections_to_sba_list_space_efficient (connections, setA, setB, chunk_length_64)
-    base_counts, sparse_counts = cython_utils.run_mtm_stats(sba_list, chunk_length_64, cutoff)
+    base_counts, sparse_counts = cy_mtm_stats.cy_mtm_stats(sba_list, chunk_length_64, cutoff)
     return setA, setB, base_counts, sparse_counts
 
 def get_dicts_from_array_outputs(base_counts, sparse_counts, setA):
