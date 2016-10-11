@@ -24,6 +24,30 @@ def convert_connections_to_binary(connections, setA, setB):
         output[ia, ib // 64] |= np.uint64(1 << (ib % 64))
     return output
 
+def get_grouped_indices(connections, mappingA, mappingB):
+    grouped = {}
+    for a, b in connections:
+        grouped.setdefault(mappingA[a],[]).append(mappingB[b])
+    return grouped
+
+def convert_connections_to_sba_list_space_efficient(connections, setA, setB, chunk_length_64):
+    '''connections is a many-to-many mapping from set A to set B
+       Returns a list of SBA compressed binary arrays where each item in set B gets mapped to a single bit and each item in set A gets a row of these bits'''
+    mappingA = {p: i for i, p in enumerate(setA)}
+    mappingB = {p: i for i, p in enumerate(setB)}
+    
+    lenB64 = int(np.ceil(len(setB) * 1. / 64))
+    tmp_arr = np.empty(lenB64, np.uint64)
+    grouped = get_grouped_indices(connections, mappingA, mappingB)
+    sba_list = [None] * len(setA)
+    for ia, ib_list in grouped.iteritems():
+        tmp_arr *= 0
+        for ib in ib_list:
+            tmp_arr[ib // 64] |= np.uint64(1 << (ib % 64))
+        sba_list[ia] = sba_compress_64(tmp_arr, chunk_length_64)
+    
+    return sba_list
+
 def mtm_stats_raw(connections, chunk_length_64=1, cutoff=0):
     '''The function that actually calls into cython
        Produces the sets from the connections,
@@ -32,8 +56,9 @@ def mtm_stats_raw(connections, chunk_length_64=1, cutoff=0):
        Returns:
            setA, setB, base_counts, sparse_counts'''
     setA, setB = extract_sets_from_connections(connections)
-    sba_list = [sba_compress_64(i, chunk_length_64)
-                for i in convert_connections_to_binary(connections, setA, setB)]
+    #sba_list = [sba_compress_64(i, chunk_length_64)
+    #            for i in convert_connections_to_binary(connections, setA, setB)]
+    sba_list = convert_connections_to_sba_list_space_efficient (connections, setA, setB, chunk_length_64)
     base_counts, sparse_counts = cython_utils.run_mtm_stats(sba_list, chunk_length_64, cutoff)
     return setA, setB, base_counts, sparse_counts
 

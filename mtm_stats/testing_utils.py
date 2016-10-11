@@ -54,5 +54,9 @@ def run_timing_test(*args, **kwds):
         print bc_dict
         print sc_dict
     
-    print generate_time, process_time
+    # Printing/returning section:
+    sizeA = kwds.pop('sizeA', 10000)
+    sizeB = kwds.pop('sizeB', 10000000)
+    num_connections = kwds.pop('num_connections', 1000000)
+    print sizeA, sizeB, num_connections, generate_time, process_time
     return generate_time, process_time
