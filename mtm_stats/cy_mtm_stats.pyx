@@ -133,7 +133,7 @@ def cy_mtm_stats(sba_list, chunk_length, cutoff=0):
                             )
         
         with gil:
-            sparse_counts_list[i] = sparse_counts[thread_number][:num_sparse_counts]
+            sparse_counts_list[i] = np.array(sparse_counts[thread_number][:num_sparse_counts])
 
     # Collect the results
     all_sparse_counts = np.concatenate(sparse_counts_list)

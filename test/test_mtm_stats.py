@@ -1,7 +1,10 @@
 '''Test it all'''
 
-import mtm_stats
 import numpy as np
+import mtm_stats
+from mtm_stats.testing_utils import (generate_test_set, run_timing_test,
+                                     naive_counts, naivest_counts, is_naive_same)
+
 
 TEST_SET_1 = [('a1', 'b1'),
               ('a1', 'b2'),
@@ -16,107 +19,136 @@ def test_mtm_stats_1():
     assert bcd == {'a1': 3, 'a3': 1, 'a2': 2, 'a4': 1}
     assert scd == {('a1', 'a2'): (2, 3), ('a1', 'a3'): (1, 3)}
 
+def test_mtm_stats_2():
+    bcd, scd = mtm_stats.mtm_stats(TEST_SET_1)
+    assert bcd == {'a1': 3, 'a3': 1, 'a2': 2, 'a4': 1}
+    assert scd == {('a1', 'a2'): (2, 3), ('a1', 'a3'): (1, 3)}
+    assert (bcd, scd) == naive_counts(TEST_SET_1)
+    assert (bcd, scd) == naivest_counts(TEST_SET_1)
+
+def test_mtm_stats_sizeA_10_sizeB_20_num_connections_20():
+    assert is_naive_same(generate_test_set(sizeA=10,
+                                           sizeB=20,
+                                           num_connections=20))
+
+
+def test_mtm_stats_sizeA_10_sizeB_10_num_connections_100():
+    assert is_naive_same(generate_test_set(sizeA=10,
+                                           sizeB=10,
+                                           num_connections=100))
+
+def test_mtm_stats_sizeA_100_sizeB_10000_num_connections_10000():
+    assert is_naive_same(generate_test_set(sizeA=100,
+                                           sizeB=10000,
+                                           num_connections=10000))
+
+def test_mtm_stats_sizeA_1000_sizeB_100000_num_connections_50000():
+    assert is_naive_same(generate_test_set(sizeA=1000,
+                                           sizeB=100000,
+                                           num_connections=50000),
+                        print_time=True)
+
 def test_get_Jaccard_index_1():
     bcd, ji = mtm_stats.get_Jaccard_index(TEST_SET_1)
     assert bcd == {'a1': 3, 'a3': 1, 'a2': 2, 'a4': 1}
     assert ji == {('a1', 'a2'): 2./3, ('a1', 'a3'): 1./3}
 
 def performance_test_sizeA_100_sizeB_10000_num_connections_10000():
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=100,
-                                                     sizeB=10000,
-                                                     num_connections=10000)
+    gt, mt = run_timing_test(sizeA=100,
+                             sizeB=10000,
+                             num_connections=10000)
     assert mt < 1
 
 def performance_test_sizeA_10000_sizeB_1000000_num_connections_1000000():
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=10000,
-                                                     sizeB=1000000,
-                                                     num_connections=1000000)
+    gt, mt = run_timing_test(sizeA=10000,
+                             sizeB=1000000,
+                             num_connections=1000000)
     assert mt < 100, 'mtm_stats is too slow'
     # Uses about 0.2GB, 20s (on my machine)
 
 
 def performance_test_sizeA_10000_sizeB_10000000_num_connections_1000000():
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=10000,
-                                                     sizeB=10000000,
-                                                     num_connections=1000000)
+    gt, mt = run_timing_test(sizeA=10000,
+                             sizeB=10000000,
+                             num_connections=1000000)
     assert mt < 100, 'mtm_stats is too slow'
     # Uses about 0.8GB, 19s (on my machine)
 
 def performance_test_sizeA_5000_sizeB_20000000_num_connections_1000000():
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=5000,
-                                                     sizeB=20000000,
-                                                     num_connections=1000000)
+    gt, mt = run_timing_test(sizeA=5000,
+                             sizeB=20000000,
+                             num_connections=1000000)
     assert mt < 100, 'mtm_stats is too slow'
     # Uses about 1.5GB, 13s (on my machine)
 
 def performance_test_sizeA_2000_sizeB_50000000_num_connections_1000000():
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=2000,
-                                                     sizeB=50000000,
-                                                     num_connections=1000000)
+    gt, mt = run_timing_test(sizeA=2000,
+                             sizeB=50000000,
+                             num_connections=1000000)
     assert mt < 100, 'mtm_stats is too slow'
     # Uses about 3.5GB, 8s (on my machine)
 
 def performance_test_sizeA_5000_sizeB_10000000_num_connections_2000000():
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=5000,
-                                                     sizeB=10000000,
-                                                     num_connections=2000000)
+    gt, mt = run_timing_test(sizeA=5000,
+                             sizeB=10000000,
+                             num_connections=2000000)
     assert mt < 100, 'mtm_stats is too slow'
     # Uses about 0.9GB, 29s (on my machine)
 
 def performance_test_sizeA_2000_sizeB_10000000_num_connections_5000000():
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=2000,
-                                                     sizeB=10000000,
-                                                     num_connections=5000000)
+    gt, mt = run_timing_test(sizeA=2000,
+                             sizeB=10000000,
+                             num_connections=5000000)
     assert mt < 100, 'mtm_stats is too slow'
     # Uses about 1.1GB, 43s (on my machine)
 
 def performance_test_sizeA_1000_sizeB_10000000_num_connections_10000000():
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=1000,
-                                                     sizeB=10000000,
-                                                     num_connections=10000000)
+    gt, mt = run_timing_test(sizeA=1000,
+                             sizeB=10000000,
+                             num_connections=10000000)
     assert mt < 100, 'mtm_stats is too slow'
     # Uses about 15GB, 54s (on my machine)
 
 def performance_test_sizeA_10000_sizeB_20000000_num_connections_1000000():
     '''Pushing it until it breaks :) '''
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=10000,
-                                                     sizeB=20000000,
-                                                     num_connections=1000000)
+    gt, mt = run_timing_test(sizeA=10000,
+                             sizeB=20000000,
+                             num_connections=1000000)
     # Uses about 1.5GB, 21s (on my machine)
 
 def performance_test_sizeA_20000_sizeB_10000000_num_connections_1000000():
     '''Pushing it until it breaks :) '''
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=20000,
-                                                     sizeB=10000000,
-                                                     num_connections=1000000)
+    gt, mt = run_timing_test(sizeA=20000,
+                             sizeB=10000000,
+                             num_connections=1000000)
     # Uses about 0.8GB, 36s (on my machine)
 
 def performance_test_sizeA_40000_sizeB_10000000_num_connections_1000000():
     '''Pushing it until it breaks :) '''
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=40000,
-                                                     sizeB=10000000,
-                                                     num_connections=1000000)
+    gt, mt = run_timing_test(sizeA=40000,
+                             sizeB=10000000,
+                             num_connections=1000000)
     # Uses about 0.8GB, 62s (on my machine)
 
 def performance_test_sizeA_10000_sizeB_10000000_num_connections_2000000():
     '''Pushing it until it breaks :) '''
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=10000,
-                                                     sizeB=10000000,
-                                                     num_connections=2000000)
+    gt, mt = run_timing_test(sizeA=10000,
+                             sizeB=10000000,
+                             num_connections=2000000)
     # Uses about 0.9GB, 40s (on my machine)
 
 def performance_test_sizeA_10000_sizeB_10000000_num_connections_10000000():
     '''Pushing it until it breaks :) '''
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=10000,
-                                                     sizeB=10000000,
-                                                     num_connections=10000000)
+    gt, mt = run_timing_test(sizeA=10000,
+                             sizeB=10000000,
+                             num_connections=10000000)
     # Uses about 1.6GB, 245s (on my machine)
 
 def performance_test_sizeA_80000_sizeB_10000000_num_connections_10000000():
     '''Pushing it until it breaks :) '''
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=80000,
-                                                     sizeB=10000000,
-                                                     num_connections=10000000)
+    gt, mt = run_timing_test(sizeA=80000,
+                             sizeB=10000000,
+                             num_connections=10000000)
     # Yeah, so it broke -- not enough memory to even make the binary input!
     # This issue actually could be worked around at the cost of some setup
     # speed by looping through the array multiple times to generate subsets
@@ -126,23 +158,27 @@ def performance_test_sizeA_80000_sizeB_10000000_num_connections_10000000():
 
 def performance_test_sizeA_10000_sizeB_10000000_num_connections_100000000():
     '''Pushing it until it breaks :) '''
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=10000,
-                                                     sizeB=10000000,
-                                                     num_connections=100000000)
+    gt, mt = run_timing_test(sizeA=10000,
+                             sizeB=10000000,
+                             num_connections=100000000)
     # Uses about 10.0GB, 2619s (on my machine)
 
 def performance_test_sizeA_10000_sizeB_20000000_num_connections_1000000_chunk_length_64_2_cutoff_0():
     '''Pushing it until it breaks :) '''
-    gt, mt = mtm_stats.testing_utils.run_timing_test(sizeA=10000,
-                                                     sizeB=20000000,
-                                                     num_connections=1000000,
-                                                     chunk_length_64=2,
-                                                     cutoff=0)
+    gt, mt = run_timing_test(sizeA=10000,
+                             sizeB=20000000,
+                             num_connections=1000000,
+                             chunk_length_64=2,
+                             cutoff=0)
     # Uses about 1.5GB, 21s (on my machine)
 
 
 if __name__ == '__main__':
     test_mtm_stats_1()
+    test_mtm_stats_sizeA_10_sizeB_20_num_connections_20()
+    test_mtm_stats_sizeA_10_sizeB_10_num_connections_100()
+    test_mtm_stats_sizeA_100_sizeB_10000_num_connections_10000()
+    test_mtm_stats_sizeA_1000_sizeB_100000_num_connections_50000()
     test_get_Jaccard_index_1()
     performance_test_sizeA_100_sizeB_10000_num_connections_10000()
     #performance_test_sizeA_10000_sizeB_1000000_num_connections_1000000()

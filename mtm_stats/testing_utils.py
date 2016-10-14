@@ -25,7 +25,7 @@ def generate_test_set(sizeA=10000,
     a_list = [setA_full[i] for i in a_inds]
     b_list = [setB_full[i] for i in b_inds]
     connections = zip(a_list, b_list)
-    return connections
+    return sorted(set(connections)) # Make sure everything is unique, etc
 
 def run_timing_test(*args, **kwds):
     '''Generate a test set and run mtm_stats
@@ -60,3 +60,68 @@ def run_timing_test(*args, **kwds):
     num_connections = kwds.pop('num_connections', 1000000)
     print sizeA, sizeB, num_connections, generate_time, process_time
     return generate_time, process_time
+
+def naive_counts(connections):
+    '''connections is a many-to-many mapping from set A to set B
+       Uses a very naive algorithm to compute the intersection and union counts
+       Returns a dict of tuples keyed on tuples'''
+    setA, setB = mtm_stats.extract_sets_from_connections(connections)
+    mappingA = {p: i for i, p in enumerate(setA)}
+    mappingB = {p: i for i, p in enumerate(setB)}
+    
+    grouped = mtm_stats.get_grouped_indices(connections, mappingA, mappingB)
+    
+    base_counts_dict = {setA[ia]: len(ib_list)
+                        for ia, ib_list in grouped.iteritems()}
+    
+    sparse_counts_dict = {}
+    for i in range(len(setA)):
+        for j in range(i):
+            ai, aj = setA[i], setA[j]
+            sparse_counts_dict[(aj, ai)] = (len(set(grouped[i]) & set(grouped[j])),
+                                            len(set(grouped[i]) | set(grouped[j])))
+    sparse_counts_dict = {k: v for k, v in sparse_counts_dict.iteritems()
+                               if v[0] > 0}
+    
+    return base_counts_dict, sparse_counts_dict
+
+def naivest_counts(connections):
+    '''connections is a many-to-many mapping from set A to set B
+       Uses a very naive algorithm to compute the intersection and union counts
+       Returns a dict of tuples keyed on tuples
+       Even slower version that doesn't use indexes'''
+    setA, setB = mtm_stats.extract_sets_from_connections(connections)
+    
+    grouped = {}
+    for a, b in connections:
+        grouped.setdefault(a,[]).append(b)
+    
+    base_counts_dict = {a: len(b_list)
+                        for a, b_list in grouped.iteritems()}
+    
+    sparse_counts_dict = {}
+    for i in range(len(setA)):
+        for j in range(i):
+            ai, aj = setA[i], setA[j]
+            sparse_counts_dict[(aj, ai)] = (len(set(grouped[ai]) & set(grouped[aj])),
+                                            len(set(grouped[ai]) | set(grouped[aj])))
+    sparse_counts_dict = {k: v for k, v in sparse_counts_dict.iteritems()
+                               if v[0] > 0}
+    return base_counts_dict, sparse_counts_dict
+
+def is_naive_same(connections, print_time=False, verbose=False):
+    '''Test mtm_stats against naive_counts'''
+    t = time.time()
+    mtm_result = mtm_stats.mtm_stats(connections)
+    if print_time:
+        print 'mtm_stats speed:', time.time()-t
+    t = time.time()
+    naive_result = naive_counts(connections)
+    if print_time:
+        print 'naive speed:', time.time()-t
+    
+    if verbose:
+        print 'connections', connections
+        print 'mtm_stats result', naive_result
+        print 'naive result', naive_result
+    return naive_result == mtm_result
