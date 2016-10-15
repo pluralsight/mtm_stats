@@ -30,19 +30,18 @@ typedef struct {
     UINT32 i;
     UINT32 j;
     UINT32 intersection_count;
-    UINT32 union_count;
-} SparseSetCounts;
+} IntersectionCount;
 
-void compute_base_counts(SparseBlockArray * sba_rows,
-                         int chunk_length,
-                         int num_rows,
-                         UINT32 * totals);
+void compute_counts(SparseBlockArray * sba_rows,
+                    int chunk_length,
+                    int num_rows,
+                    UINT32 * counts);
 
-int compute_intersection_and_union_counts(SparseBlockArray * sba_rows,
-                                          int chunk_length,
-                                          int i,
-                                          int num_rows,
-                                          SparseSetCounts * sparse_counts,
-                                          int cutoff);
+int compute_intersection_counts(SparseBlockArray * sba_rows,
+                                int chunk_length,
+                                int i,
+                                int num_rows,
+                                IntersectionCount * intersection_counts,
+                                int cutoff);
 
 #endif
