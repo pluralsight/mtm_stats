@@ -30,14 +30,15 @@ cdef extern from "mtm_stats_core.h":
     void compute_base_counts(SparseBlockArray * sba_rows,
                              int chunk_length,
                              int num_rows,
-                             UINT32 * totals)
+                             UINT32 * base_counts)
     
     int compute_intersection_and_union_counts(SparseBlockArray * sba_rows,
-                                          int chunk_length,
-                                          int i,
-                                          int num_rows,
-                                          SparseSetCounts * sparse_counts,
-                                          int cutoff) nogil
+                                              int chunk_length,
+                                              int i,
+                                              int num_rows,
+                                              UINT32 * base_counts,
+                                              SparseSetCounts * sparse_counts,
+                                              int cutoff) nogil
 
 
 SPARSE_COUNTS_DTYPE = [('i', np.uint32),
@@ -128,6 +129,7 @@ def cy_mtm_stats(sba_list, chunk_length, cutoff=0):
                                 chunk_length_c,
                                 i,
                                 num_items_c,
+                                base_counts_pointer,
                                 sparse_counts_pointer_arr[thread_number],
                                 cutoff_c
                             )

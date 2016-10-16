@@ -107,12 +107,12 @@ static UINT32 sparse_bit_sum_and(SparseBlockArray a,
 void compute_base_counts(SparseBlockArray * sba_rows,
                          int chunk_length,
                          int num_rows,
-                         UINT32 * totals) {
+                         UINT32 * base_counts) {
 //Compute the bit_sum of each SBA (row) in an array
-//Store the result in "totals" (pre-allocated with length "num_rows")
+//Store the result in "base_counts" (pre-allocated with length "num_rows")
     int i;
     for(i=0;i<num_rows;i++) {
-        totals[i] = sparse_bit_sum(sba_rows[i], chunk_length);
+        base_counts[i] = sparse_bit_sum(sba_rows[i], chunk_length);
     }
 }
 
@@ -120,6 +120,7 @@ bool compute_intersection_and_union_count(SparseBlockArray * sba_rows,
                                           int chunk_length,
                                           int i,
                                           int j,
+                                          UINT32 * base_counts,
                                           SparseSetCounts * sparse_counts,
                                           int cutoff) {
 //Compute the counts (intersection and union) between two rows in an array of SBA's
@@ -134,9 +135,7 @@ bool compute_intersection_and_union_count(SparseBlockArray * sba_rows,
         sparse_counts -> i = i;
         sparse_counts -> j = j;
         sparse_counts -> intersection_count = intersection_count;
-        sparse_counts -> union_count = sparse_bit_sum_or(sba_rows[i],
-                                                         sba_rows[j],
-                                                         chunk_length);
+        sparse_counts -> union_count = base_counts[i] + base_counts[j] - intersection_count;
         return true;
     }
 }
@@ -145,9 +144,11 @@ int compute_intersection_and_union_counts(SparseBlockArray * sba_rows,
                                           int chunk_length,
                                           int i,
                                           int num_rows,
+                                          UINT32 * base_counts,
                                           SparseSetCounts * sparse_counts,
                                           int cutoff) {
 //Compute SparseSetCounts of all rows larger than ia with ia
+//base_counts must be pre-computed
 //sparse_counts must be pre-allocated with a length of num_rows
     int j;
     bool result;
@@ -157,6 +158,7 @@ int compute_intersection_and_union_counts(SparseBlockArray * sba_rows,
                                                       chunk_length,
                                                       i,
                                                       j,
+                                                      base_counts,
                                                       &sparse_counts[num_sparse_counts],
                                                       cutoff);
         if(result) {

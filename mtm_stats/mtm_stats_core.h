@@ -36,12 +36,13 @@ typedef struct {
 void compute_base_counts(SparseBlockArray * sba_rows,
                          int chunk_length,
                          int num_rows,
-                         UINT32 * totals);
+                         UINT32 * base_counts);
 
 int compute_intersection_and_union_counts(SparseBlockArray * sba_rows,
                                           int chunk_length,
                                           int i,
                                           int num_rows,
+                                          UINT32 * base_counts,
                                           SparseSetCounts * sparse_counts,
                                           int cutoff);
 
