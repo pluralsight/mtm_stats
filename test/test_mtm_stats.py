@@ -189,7 +189,7 @@ if __name__ == '__main__':
     #performance_test_sizeA_2000_sizeB_10000000_num_connections_5000000()
     #performance_test_sizeA_1000_sizeB_10000000_num_connections_10000000()
     #performance_test_sizeA_10000_sizeB_20000000_num_connections_1000000()
-    #performance_test_sizeA_20000_sizeB_10000000_num_connections_1000000()
+    performance_test_sizeA_20000_sizeB_10000000_num_connections_1000000()
     #performance_test_sizeA_40000_sizeB_10000000_num_connections_1000000()
     #performance_test_sizeA_10000_sizeB_10000000_num_connections_2000000()
     #performance_test_sizeA_10000_sizeB_10000000_num_connections_10000000()
@@ -327,3 +327,23 @@ if __name__ == '__main__':
 # 10000, 10000000, 1000000, 19.390857935 , 0.8
 #  5000, 20000000, 1000000, 13.1896178722, 1.5
 #  2000, 50000000, 1000000,  7.9108359814, 3.5
+
+
+########################################################################
+##             Performance comparison of recent branches              ##
+########################################################################
+# Tested this branch (v0.3.1) against 0.3.0fix and testing_alternate_union_count
+# Looks like all have the same memory usage profile (0.85GB to 0.9GB, peak around 1.02GB)
+# The timing of two newer branches is the same with the older version being slower:
+
+# v0.3.1
+#20000 10000000 1000000 9.99252605438 33.4487009048
+#20000 10000000 1000000 10.0190310478 32.8482899666
+
+# testing_alternate_union_count
+#20000 10000000 1000000 10.1516039371 33.6840791702
+#20000 10000000 1000000 10.1917278767 32.890652895
+
+# v0.3.0fix
+#20000 10000000 1000000 10.6243419647 36.6372568607
+#20000 10000000 1000000 10.2242870331 36.3161420822
