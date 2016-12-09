@@ -1,3 +1,7 @@
 include *.txt
 include *.rst
 include *.md
+include mtm_stats/*.pxd
+include mtm_stats/*.pyx
+include mtm_stats/*.h
+include mtm_stats/*.c
