@@ -1,8 +1,7 @@
-cimport c_python
-cimport c_numpy
 import numpy as np
-import multiprocessing
+cimport numpy as np
 
+import multiprocessing
 from cython.parallel cimport parallel
 from cython.parallel import prange
 cimport openmp
@@ -11,6 +10,7 @@ ctypedef unsigned int UINT32
 ctypedef unsigned long int UINT64
 
 cdef extern from "stdlib.h":
+    ctypedef int size_t
     void free(void* ptr)
     void* malloc(size_t size)
     void* realloc(void* ptr, size_t size)
@@ -49,8 +49,8 @@ cdef void set_SBA_from_py_dict(SparseBlockArray * sba, input_dict, sba_ind=0):
        {'locs': <numpy array of uint32>,
         'array': <numpy array of uint64>}
        '''
-    cdef c_numpy.ndarray locs_cn = input_dict['locs']
-    cdef c_numpy.ndarray array_cn = input_dict['array']
+    cdef np.ndarray locs_cn = input_dict['locs']
+    cdef np.ndarray array_cn = input_dict['array']
     
     sba[sba_ind].locs = <const UINT32 *> locs_cn.data
     sba[sba_ind].array = <const UINT64 *> array_cn.data
@@ -83,7 +83,7 @@ def cy_compute_counts(sba_list, chunk_length, cutoff=0):
     
     # Compute the counts (bitsum the sba's)
     counts = np.zeros(num_items, dtype=np.uint32)
-    cdef c_numpy.ndarray counts_cn = counts
+    cdef np.ndarray counts_cn = counts
     cdef UINT32 * counts_pointer
     counts_pointer = <UINT32 *> counts_cn.data
     
@@ -134,7 +134,7 @@ def cy_compute_intersection_counts(sba_list, chunk_length, cutoff=0):
     # Each thread then gets it's own num_items length buffer to store its result
     intersection_counts_tmp_arr = np.zeros((num_threads, num_items),        # Make sure each thread uses separate memory
                                            dtype=INTERSECTION_COUNTS_DTYPE)
-    cdef c_numpy.ndarray intersection_counts_cn
+    cdef np.ndarray intersection_counts_cn
     cdef IntersectionCount ** intersection_counts_pointer_arr
     intersection_counts_pointer_arr = <IntersectionCount **> malloc(num_threads * sizeof(IntersectionCount *))
     for i in range(num_threads):
