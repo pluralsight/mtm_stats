@@ -52,7 +52,7 @@ def convert_connections_to_sba_list_space_efficient(connections, setA, setB, chu
     
     return sba_list
 
-def mtm_stats_raw(connections, chunk_length_64=1, cutoff=0):
+def mtm_stats_raw(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0):
     '''The function that actually calls into cython
        Produces the sets from the connections,
        converts the connection to binary and compresses them into sba's
@@ -62,8 +62,8 @@ def mtm_stats_raw(connections, chunk_length_64=1, cutoff=0):
     setA, setB = extract_sets_from_connections(connections)
     #sba_list = [sba_compress_64(i, chunk_length_64)
     #            for i in convert_connections_to_binary(connections, setA, setB)]
-    sba_list = convert_connections_to_sba_list_space_efficient (connections, setA, setB, chunk_length_64)
-    base_counts, intersection_counts = cy_mtm_stats.cy_mtm_stats(sba_list, chunk_length_64, cutoff)
+    sba_list = convert_connections_to_sba_list_space_efficient(connections, setA, setB, chunk_length_64)
+    base_counts, intersection_counts = cy_mtm_stats.cy_mtm_stats(sba_list, chunk_length_64, indices_a, cutoff, start_j)
     return setA, setB, base_counts, intersection_counts
 
 def get_dicts_from_array_outputs(base_counts, intersection_counts, setA):
@@ -73,8 +73,8 @@ def get_dicts_from_array_outputs(base_counts, intersection_counts, setA):
                                       for i, j, ic in intersection_counts}
     return base_counts_dict, iu_counts_dict
 
-def mtm_stats(connections, chunk_length_64=1, cutoff=0):
-    setA, setB, base_counts, intersection_counts = mtm_stats_raw(connections, chunk_length_64=1, cutoff=0)
+def mtm_stats(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0):
+    setA, setB, base_counts, intersection_counts = mtm_stats_raw(connections, chunk_length_64, indices_a, cutoff, start_j)
     base_counts_dict, iu_counts_dict = get_dicts_from_array_outputs(base_counts, intersection_counts, setA)
     return base_counts_dict, iu_counts_dict
 
@@ -82,8 +82,8 @@ def get_Jaccard_index_from_sparse_connections(iu_counts_dict):
     return {k: ic * 1. / uc
             for k, (ic, uc) in iu_counts_dict.iteritems()}
 
-def get_Jaccard_index(connections, chunk_length_64=1, cutoff=0):
-    base_counts_dict, iu_counts_dict = mtm_stats(connections, chunk_length_64=1, cutoff=0)
+def get_Jaccard_index(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0):
+    base_counts_dict, iu_counts_dict = mtm_stats(connections, chunk_length_64, indices_a, cutoff, start_j)
     jaccard_index = get_Jaccard_index_from_sparse_connections(iu_counts_dict)
     return base_counts_dict, jaccard_index
 

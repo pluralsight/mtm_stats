@@ -40,6 +40,7 @@ void compute_counts(SparseBlockArray * sba_rows,
 int compute_intersection_counts(SparseBlockArray * sba_rows,
                                 int chunk_length,
                                 int i,
+                                int start_j,
                                 int num_rows,
                                 IntersectionCount * intersection_counts,
                                 int cutoff);

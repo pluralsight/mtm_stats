@@ -139,17 +139,19 @@ bool compute_intersection_count(SparseBlockArray * sba_rows,
 }
 
 int compute_intersection_counts(SparseBlockArray * sba_rows,
-                                          int chunk_length,
-                                          int i,
-                                          int num_rows,
-                                          IntersectionCount * intersection_counts,
-                                          int cutoff) {
+                                int chunk_length,
+                                int i,
+                                int start_j,
+                                int num_rows,
+                                IntersectionCount * intersection_counts,
+                                int cutoff) {
 //Compute IntersectionCount of all rows larger than ia with ia
 //intersection_counts must be pre-allocated with a length of num_rows
+//start_j should be (i + 1) under normal circumstances
     int j;
     bool result;
     int num_intersection_counts = 0;
-    for(j = i+1; j < num_rows; j++) {
+    for(j = start_j; j < num_rows; j++) {
         result = compute_intersection_count(sba_rows,
                                             chunk_length,
                                             i,

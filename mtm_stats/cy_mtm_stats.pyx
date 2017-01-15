@@ -8,6 +8,7 @@ cimport openmp
 
 ctypedef unsigned int UINT32
 ctypedef unsigned long int UINT64
+ctypedef int INT32
 
 cdef extern from "stdlib.h":
     ctypedef int size_t
@@ -34,6 +35,7 @@ cdef extern from "mtm_stats_core.h":
     int compute_intersection_counts(SparseBlockArray * sba_rows,
                                     int chunk_length,
                                     int i,
+                                    int start_j,
                                     int num_rows,
                                     IntersectionCount * intersection_counts,
                                     int cutoff) nogil
@@ -94,7 +96,7 @@ def cy_compute_counts(sba_list, chunk_length, cutoff=0):
     
     return counts
 
-def cy_compute_intersection_counts(sba_list, chunk_length, cutoff=0):
+def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0):
     '''Wrapper around compute_intersection_counts
        Inputs:
         * sba_list: list of sparse block arrays (python format)
@@ -102,6 +104,8 @@ def cy_compute_intersection_counts(sba_list, chunk_length, cutoff=0):
                     specifically, an list of dictionaries with fields 'array' and 'locs'
         * chunk_length: sba compression parameter
         * cutoff: maximum size of intersection to keep in the output
+        * start_j: an offset to apply on comparison
+          (skip comparing against values less than start_j)
        
        Returns a numpy structured array with the following fields:
         * i, j: pair of indices into set A (set of interest)
@@ -109,7 +113,7 @@ def cy_compute_intersection_counts(sba_list, chunk_length, cutoff=0):
                               A[i] and A[j] share in common
     '''
     
-    cdef int i
+    cdef int i, ii
     
     num_items = len(sba_list)
     
@@ -117,6 +121,7 @@ def cy_compute_intersection_counts(sba_list, chunk_length, cutoff=0):
     cdef int num_items_c = num_items
     cdef int chunk_length_c = chunk_length
     cdef int cutoff_c = cutoff
+    cdef int start_j_c = start_j
     
     # Map the numpy arrays directly to C pointers
     cdef SparseBlockArray * sba_pointer = <SparseBlockArray *> malloc(num_items * sizeof(SparseBlockArray))
@@ -144,11 +149,25 @@ def cy_compute_intersection_counts(sba_list, chunk_length, cutoff=0):
     cdef int num_intersection_counts
     cdef int thread_number
     intersection_counts_list = [None] * num_items
-    for i in prange(num_items_c, nogil=True, chunksize=1, num_threads=num_threads, schedule='static'):
+    
+    indices_a = np.asanyarray((np.arange(num_items)
+                               if indices_a is None else
+                               indices_a),
+                              dtype=np.int32)
+    
+    cdef np.ndarray indices_a_cn = indices_a
+    cdef INT32 * indices_a_pointer
+    indices_a_pointer = <INT32 *> indices_a_cn.data
+    
+    num_a = len(indices_a)
+    
+    for ii in prange(num_a, nogil=True, chunksize=1, num_threads=num_threads, schedule='static'):
+        i = indices_a_pointer[ii] # add a layer of indirection, but should still be fast
         thread_number = openmp.omp_get_thread_num()
         num_intersection_counts = compute_intersection_counts(sba_pointer,
                                                               chunk_length_c,
                                                               i,
+                                                              start_j_c if start_j_c > i else i+1,
                                                               num_items_c,
                                                               intersection_counts_pointer_arr[thread_number],
                                                               cutoff_c)
@@ -159,7 +178,7 @@ def cy_compute_intersection_counts(sba_list, chunk_length, cutoff=0):
     intersection_counts = np.concatenate(intersection_counts_list)
     return intersection_counts
 
-def cy_mtm_stats(sba_list, chunk_length, cutoff=0):
+def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0):
     '''Run mtm_stats on 64-bit arrays
        Inputs:
         * sba_list: list of sparse block arrays (python format)
@@ -176,7 +195,10 @@ def cy_mtm_stats(sba_list, chunk_length, cutoff=0):
                               A[i] and A[j] share in common
     '''
     counts = cy_compute_counts(sba_list, chunk_length, cutoff)
-    intersection_counts = cy_compute_intersection_counts(sba_list, chunk_length, cutoff)
+    intersection_counts = cy_compute_intersection_counts(sba_list, chunk_length, indices_a, cutoff, start_j)
+
+    # Return the results from the two sections
+    return counts, intersection_counts
 
     # Return the results from the two sections
     return counts, intersection_counts
