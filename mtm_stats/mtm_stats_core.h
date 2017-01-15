@@ -45,4 +45,17 @@ int compute_intersection_counts(SparseBlockArray * sba_rows,
                                 IntersectionCount * intersection_counts,
                                 int cutoff);
 
+void compute_counts_dense_input(UINT64 * rows_arr,
+                                int chunk_length,
+                                int num_rows,
+                                UINT32 * counts);
+
+int compute_intersection_counts_dense_input(UINT64 * rows_arr,
+                                            int chunk_length,
+                                            int i,
+                                            int start_j,
+                                            int num_rows,
+                                            IntersectionCount * intersection_counts,
+                                            int cutoff);
+
 #endif

@@ -165,3 +165,70 @@ int compute_intersection_counts(SparseBlockArray * sba_rows,
     return num_intersection_counts;
 }
 
+////////////////////////////////////////////////////////////////////////
+// Add 3 new functions that take dense arrays (simple UINT64 pointers)
+// instead of SparseBlockArray pointers.
+// These still allow for chunk_length to be used
+////////////////////////////////////////////////////////////////////////
+
+void compute_counts_dense_input(UINT64 * rows_arr,
+                                int chunk_length,
+                                int num_rows,
+                                UINT32 * counts) {
+//Compute the bit_sum of each SBA (row) in an array
+//Store the result in "counts" (pre-allocated with length "num_rows")
+    int i;
+    for(i=0;i<num_rows;i++) {
+        counts[i] = bit_sum(rows_arr[i], chunk_length);
+    }
+}
+
+bool compute_intersection_count_dense_input(UINT64 * rows_arr,
+                                            int chunk_length,
+                                            int i,
+                                            int j,
+                                            IntersectionCount * intersection_count_ptr,
+                                            int cutoff) {
+//Compute the counts (intersection and union) between two rows in an array of SBA's
+//if the intersection is greater than the cutoff, return the intersection and the union in the intersection_counts and return true
+//otherwise return false (result not be saved)
+    UINT32 count = bit_sum_and(&rows_arr[i * chunk_length],
+                               &rows_arr[j * chunk_length],
+                               chunk_length);
+    if(count <= cutoff) {
+        return false;
+    } else {
+        intersection_count_ptr -> i = i;
+        intersection_count_ptr -> j = j;
+        intersection_count_ptr -> intersection_count = count;
+        return true;
+    }
+}
+
+int compute_intersection_counts_dense_input(UINT64 * rows_arr,
+                                            int chunk_length,
+                                            int i,
+                                            int start_j,
+                                            int num_rows,
+                                            IntersectionCount * intersection_counts,
+                                            int cutoff) {
+//Compute IntersectionCount of all rows larger than ia with ia
+//intersection_counts must be pre-allocated with a length of num_rows
+//start_j should be (i + 1) under normal circumstances
+    int j;
+    bool result;
+    int num_intersection_counts = 0;
+    for(j = start_j; j < num_rows; j++) {
+        result = compute_intersection_count_dense_input(rows_arr,
+                                                        chunk_length,
+                                                        i,
+                                                        j,
+                                                        &intersection_counts[num_intersection_counts],
+                                                        cutoff);
+        if(result) {
+            num_intersection_counts++;
+        }
+    }
+    return num_intersection_counts;
+}
+

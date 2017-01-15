@@ -40,6 +40,19 @@ cdef extern from "mtm_stats_core.h":
                                     IntersectionCount * intersection_counts,
                                     int cutoff) nogil
 
+    void compute_counts_dense_input(UINT64 * rows_arr,
+                                    int chunk_length,
+                                    int num_rows,
+                                    UINT32 * counts)
+                
+    int compute_intersection_counts_dense_input(UINT64 * rows_arr,
+                                                int chunk_length,
+                                                int i,
+                                                int start_j,
+                                                int num_rows,
+                                                IntersectionCount * intersection_counts,
+                                                int cutoff) nogil
+
 
 INTERSECTION_COUNTS_DTYPE = [('i', np.uint32),
                              ('j', np.uint32),
@@ -178,6 +191,124 @@ def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutof
     intersection_counts = np.concatenate(intersection_counts_list)
     return intersection_counts
 
+def cy_compute_counts_dense_input(rows_arr, cutoff=0):
+    '''Wrapper around compute_counts
+       Inputs:
+        * sba_list: list of sparse block arrays (python format)
+                    compressed version of the subset of B connected to each element of A
+                    specifically, an list of dictionaries with fields 'array' and 'locs'
+        * chunk_length: sba compression parameter
+        * cutoff: maximum size of intersection to keep in the output
+       
+       Returns a numpy array (uint32) with the count for each sba_list
+    '''
+    
+    cdef int i
+    
+    num_items, chunk_length = rows_arr.shape
+    
+    cdef int num_items_c = num_items
+    cdef int chunk_length_c = chunk_length
+    
+    # Map the numpy arrays directly to C pointers
+    cdef np.ndarray rows_cn
+    rows_cn = rows_arr
+    cdef UINT64 * rows_pointer = <const UINT64 *> rows_cn.data
+    
+    # Compute the counts (bitsum the rows)
+    counts = np.zeros(num_items, dtype=np.uint32)
+    cdef np.ndarray counts_cn = counts
+    cdef UINT32 * counts_pointer
+    counts_pointer = <UINT32 *> counts_cn.data
+    
+    compute_counts_dense_input(rows_pointer,
+                               chunk_length_c,
+                               num_items_c,
+                               counts_pointer)
+    
+    return counts
+
+def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0):
+    '''Wrapper around compute_intersection_counts_dense_input
+       Inputs:
+        * rows_arr: array of uint64 values with shape (num_rows, chunk_length)
+        * indices_a: parameter to allow only running computing intersections
+                     of certain values against the rest of the values
+                     (with default None, compute all indices against all others)
+        * cutoff: maximum size of intersection to keep in the output
+        * start_j: an offset to apply on comparison
+          (skip comparing against values less than start_j)
+       
+       Returns a numpy structured array with the following fields:
+        * i, j: pair of indices into set A (set of interest)
+        * intersection_count: number of elements in B that the 
+                              A[i] and A[j] share in common
+    '''
+    
+    cdef int i, ii
+    
+    num_items, chunk_length = rows_arr.shape
+    
+    cdef int num_threads = multiprocessing.cpu_count()
+    cdef int num_items_c = num_items
+    cdef int chunk_length_c = chunk_length
+    cdef int cutoff_c = cutoff
+    cdef int start_j_c = start_j
+    
+    # Map the numpy arrays directly to C pointers
+    cdef np.ndarray rows_cn
+    rows_cn = rows_arr
+    cdef UINT64 * rows_pointer = <const UINT64 *> rows_cn.data
+    
+    # Run compute_intersection_counts on the generated pointers:
+    
+    # Set up results buffer and pointers
+    # This section:
+    # * Makes a num_threads by num_items numpy array
+    # * Makes a C double pointer (array-of-arrays) of IntersectionCounts
+    # * Sets the pointers to each of the numpy sub-arrays (each is num_items)
+    # Each thread then gets it's own num_items length buffer to store its result
+    intersection_counts_tmp_arr = np.zeros((num_threads, num_items),        # Make sure each thread uses separate memory
+                                           dtype=INTERSECTION_COUNTS_DTYPE)
+    cdef np.ndarray intersection_counts_cn
+    cdef IntersectionCount ** intersection_counts_pointer_arr
+    intersection_counts_pointer_arr = <IntersectionCount **> malloc(num_threads * sizeof(IntersectionCount *))
+    for i in range(num_threads):
+        intersection_counts_cn = intersection_counts_tmp_arr[i]
+        intersection_counts_pointer_arr[i] = <IntersectionCount*> intersection_counts_cn.data
+    
+    cdef int num_intersection_counts
+    cdef int thread_number
+    intersection_counts_list = [None] * num_items
+    
+    indices_a = np.asanyarray((np.arange(num_items)
+                               if indices_a is None else
+                               indices_a),
+                              dtype=np.int32)
+    cdef np.ndarray indices_a_cn = indices_a
+    cdef INT32 * indices_a_pointer
+    indices_a_pointer = <INT32 *> indices_a_cn.data
+    
+    num_a = len(indices_a)
+    
+    for ii in prange(num_a, nogil=True, chunksize=1, num_threads=num_threads, schedule='static'):
+        i = indices_a_pointer[ii] # add a layer of indirection, but should still be fast
+        thread_number = openmp.omp_get_thread_num()
+        num_intersection_counts = compute_intersection_counts_dense_input(rows_pointer,
+                                                                          chunk_length_c,
+                                                                          i,
+                                                                          start_j_c if start_j_c > i else i+1,
+                                                                          num_items_c,
+                                                                          intersection_counts_pointer_arr[thread_number],
+                                                                          cutoff_c)
+        with gil:
+            intersection_counts_list[i] = np.array(intersection_counts_tmp_arr[thread_number][:num_intersection_counts])
+
+    # Collect the results and return
+    intersection_counts = np.concatenate(intersection_counts_list)
+    return intersection_counts
+
+
 def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0):
     '''Run mtm_stats on 64-bit arrays
        Inputs:
@@ -199,6 +330,25 @@ def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0):
 
     # Return the results from the two sections
     return counts, intersection_counts
+
+def cy_mtm_stats_dense_input(rows_arr, chunk_length, indices_a=None, cutoff=0, start_j=0):
+    '''Run mtm_stats on 64-bit arrays
+       Inputs:
+        * sba_list: list of sparse block arrays (python format)
+                    compressed version of the subset of B connected to each element of A
+                    specifically, an list of dictionaries with fields 'array' and 'locs'
+        * chunk_length: sba compression parameter
+        * cutoff: maximum size of intersection to keep in the output
+       
+       Returns two numpy arrays:
+       A uint32 array with the basic counts
+       A numpy structured array with the following fields:
+        * i, j: pair of indices into set A (set of interest)
+        * intersection_count: number of elements in B that the 
+                              A[i] and A[j] share in common
+    '''
+    counts = cy_compute_counts_dense_input(rows_arr, cutoff)
+    intersection_counts = cy_compute_intersection_counts_dense_input(rows_arr, indices_a, cutoff, start_j)
 
     # Return the results from the two sections
     return counts, intersection_counts
