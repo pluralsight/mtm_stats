@@ -63,7 +63,7 @@ def mtm_stats_raw(connections, chunk_length_64=1, indices_a=None, cutoff=0, star
     
     if dense_input:
         rows_arr = convert_connections_to_binary(connections, setA, setB)
-        base_counts, intersection_counts = cy_mtm_stats_dense_input(rows_arr, chunk_length, indices_a, cutoff, start_j)
+        base_counts, intersection_counts = cy_mtm_stats.cy_mtm_stats_dense_input(rows_arr, indices_a, cutoff, start_j)
     else:
         #sba_list = [sba_compress_64(i, chunk_length_64)
         #            for i in convert_connections_to_binary(connections, setA, setB)]

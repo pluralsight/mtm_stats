@@ -331,7 +331,7 @@ def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0):
     # Return the results from the two sections
     return counts, intersection_counts
 
-def cy_mtm_stats_dense_input(rows_arr, chunk_length, indices_a=None, cutoff=0, start_j=0):
+def cy_mtm_stats_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0):
     '''Run mtm_stats on 64-bit arrays
        Inputs:
         * sba_list: list of sparse block arrays (python format)
