@@ -48,11 +48,10 @@ def run_timing_test(*args, **kwds):
         print connections
     
     t = time.time()
-    bc_dict, sc_dict = mtm_stats.mtm_stats(connections)
+    setA, setB, base_counts, intersection_counts = mtm_stats.mtm_stats_raw(connections)
     process_time = time.time()-t
     if verbose:
-        print bc_dict
-        print sc_dict
+        print setA, setB, base_counts, intersection_counts
     
     # Printing/returning section:
     sizeA = kwds.pop('sizeA', 10000)
