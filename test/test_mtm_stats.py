@@ -53,6 +53,24 @@ def test_get_Jaccard_index_1():
     assert bcd == {'a1': 3, 'a3': 1, 'a2': 2, 'a4': 1}
     assert ji == {('a1', 'a2'): 2./3, ('a1', 'a3'): 1./3}
 
+def test_get_mtm_dense_vs_sparse_1():
+    connections = generate_test_set(sizeA=100,
+                                    sizeB=10000,
+                                    num_connections=10000)
+    assert (mtm_stats.mtm_stats(connections, dense_input=False, indices_a=range(10)) == 
+            mtm_stats.mtm_stats(connections, dense_input=True, indices_a=range(10)))
+
+def test_get_mtm_with_indices_a_dense_vs_sparse_1():
+    connections = generate_test_set(sizeA=100,
+                                    sizeB=10000,
+                                    num_connections=10000)
+    assert (mtm_stats.mtm_stats(connections, dense_input=False, indices_a=range(10)) ==
+            mtm_stats.mtm_stats(connections, dense_input=True, indices_a=range(10)))
+
+
+
+
+
 def performance_test_sizeA_100_sizeB_10000_num_connections_10000():
     gt, mt = run_timing_test(sizeA=100,
                              sizeB=10000,
@@ -180,6 +198,9 @@ if __name__ == '__main__':
     test_mtm_stats_sizeA_100_sizeB_10000_num_connections_10000()
     test_mtm_stats_sizeA_1000_sizeB_100000_num_connections_50000()
     test_get_Jaccard_index_1()
+    test_get_mtm_dense_vs_sparse_1()
+    test_get_mtm_with_indices_a_dense_vs_sparse_1()
+
     performance_test_sizeA_100_sizeB_10000_num_connections_10000()
     #performance_test_sizeA_10000_sizeB_1000000_num_connections_1000000()
     #performance_test_sizeA_10000_sizeB_10000000_num_connections_1000000()
