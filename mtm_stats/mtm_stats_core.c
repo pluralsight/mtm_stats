@@ -179,7 +179,8 @@ void compute_counts_dense_input(UINT64 * rows_arr,
 //Store the result in "counts" (pre-allocated with length "num_rows")
     int i;
     for(i=0;i<num_rows;i++) {
-        counts[i] = bit_sum(rows_arr[i], chunk_length);
+        counts[i] = bit_sum(&rows_arr[i * chunk_length],
+                            chunk_length);
     }
 }
 

@@ -130,6 +130,15 @@ def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutof
     
     num_items = len(sba_list)
     
+    indices_a = np.asanyarray((np.arange(num_items)
+                               if indices_a is None else
+                               indices_a),
+                              dtype=np.int32)
+    
+    num_a = len(indices_a)
+    
+    intersection_counts_list = [None] * num_a
+    
     cdef int num_threads = multiprocessing.cpu_count()
     cdef int num_items_c = num_items
     cdef int chunk_length_c = chunk_length
@@ -161,18 +170,10 @@ def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutof
     
     cdef int num_intersection_counts
     cdef int thread_number
-    intersection_counts_list = [None] * num_items
-    
-    indices_a = np.asanyarray((np.arange(num_items)
-                               if indices_a is None else
-                               indices_a),
-                              dtype=np.int32)
     
     cdef np.ndarray indices_a_cn = indices_a
     cdef INT32 * indices_a_pointer
     indices_a_pointer = <INT32 *> indices_a_cn.data
-    
-    num_a = len(indices_a)
     
     for ii in prange(num_a, nogil=True, chunksize=1, num_threads=num_threads, schedule='static'):
         i = indices_a_pointer[ii] # add a layer of indirection, but should still be fast
@@ -249,6 +250,15 @@ def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=
     
     num_items, chunk_length = rows_arr.shape
     
+    indices_a = np.asanyarray((np.arange(num_items)
+                               if indices_a is None else
+                               indices_a),
+                              dtype=np.int32)
+    
+    num_a = len(indices_a)
+    
+    intersection_counts_list = [None] * num_a
+    
     cdef int num_threads = multiprocessing.cpu_count()
     cdef int num_items_c = num_items
     cdef int chunk_length_c = chunk_length
@@ -279,17 +289,10 @@ def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=
     
     cdef int num_intersection_counts
     cdef int thread_number
-    intersection_counts_list = [None] * num_items
     
-    indices_a = np.asanyarray((np.arange(num_items)
-                               if indices_a is None else
-                               indices_a),
-                              dtype=np.int32)
     cdef np.ndarray indices_a_cn = indices_a
     cdef INT32 * indices_a_pointer
     indices_a_pointer = <INT32 *> indices_a_cn.data
-    
-    num_a = len(indices_a)
     
     for ii in prange(num_a, nogil=True, chunksize=1, num_threads=num_threads, schedule='static'):
         i = indices_a_pointer[ii] # add a layer of indirection, but should still be fast
