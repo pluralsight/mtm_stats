@@ -1,8 +1,10 @@
 '''Utility functions for use in testing'''
+from __future__ import print_function
+from __future__ import absolute_import
 
 import time
 import numpy as np
-import mtm_stats
+from . import mtm_stats
 
 def generate_test_set(sizeA=10000,
                       sizeB = 10000000,
@@ -45,19 +47,19 @@ def run_timing_test(*args, **kwds):
     connections = generate_test_set(*args, **kwds)
     generate_time = time.time()-t
     if verbose:
-        print connections
+        print(connections)
     
     t = time.time()
     setA, setB, base_counts, intersection_counts = mtm_stats.mtm_stats_raw(connections)
     process_time = time.time()-t
     if verbose:
-        print setA, setB, base_counts, intersection_counts
+        print(setA, setB, base_counts, intersection_counts)
     
     # Printing/returning section:
     sizeA = kwds.pop('sizeA', 10000)
     sizeB = kwds.pop('sizeB', 10000000)
     num_connections = kwds.pop('num_connections', 1000000)
-    print sizeA, sizeB, num_connections, generate_time, process_time
+    print(sizeA, sizeB, num_connections, generate_time, process_time)
     return generate_time, process_time
 
 def naive_counts(connections):
@@ -113,14 +115,14 @@ def is_naive_same(connections, print_time=False, verbose=False):
     t = time.time()
     mtm_result = mtm_stats.mtm_stats(connections)
     if print_time:
-        print 'mtm_stats speed:', time.time()-t
+        print('mtm_stats speed:', time.time()-t)
     t = time.time()
     naive_result = naive_counts(connections)
     if print_time:
-        print 'naive speed:', time.time()-t
+        print('naive speed:', time.time()-t)
     
     if verbose:
-        print 'connections', connections
-        print 'mtm_stats result', naive_result
-        print 'naive result', naive_result
+        print('connections', connections)
+        print('mtm_stats result', naive_result)
+        print('naive result', naive_result)
     return naive_result == mtm_result

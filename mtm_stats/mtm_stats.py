@@ -1,11 +1,13 @@
 '''The main script'''
+from __future__ import print_function
+from __future__ import absolute_import
 
 # To update with any Cython changes, just run:
 # python setup.py build_ext --inplace
 
 import numpy as np
-from sparse_block_array import sba_compress_64
-import cy_mtm_stats
+from .sparse_block_array import sba_compress_64
+from . import cy_mtm_stats
 
 def extract_sets_from_connections(connections):
     '''Get two sorted sets from the connections tuples,
@@ -101,5 +103,5 @@ if __name__ == '__main__':
                    ('a2', 'b2'),
                    ('a3', 'b3'),
                    ('a4', 'b9'),])
-    print r[0]
-    print r[1]
+    print(r[0])
+    print(r[1])
