@@ -1,6 +1,7 @@
 '''The main script'''
 from __future__ import print_function
 from __future__ import absolute_import
+from future.utils import viewitems
 
 # To update with any Cython changes, just run:
 # python setup.py build_ext --inplace
@@ -46,7 +47,7 @@ def convert_connections_to_sba_list_space_efficient(connections, setA, setB, chu
     tmp_arr = np.empty(lenB64, np.uint64)
     grouped = get_grouped_indices(connections, mappingA, mappingB)
     sba_list = [None] * len(setA)
-    for ia, ib_list in grouped.iteritems():
+    for ia, ib_list in viewitems(grouped):
         tmp_arr *= 0
         for ib in ib_list:
             tmp_arr[ib // 64] |= np.uint64(1 << (ib % 64))
@@ -88,7 +89,7 @@ def mtm_stats(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=
 
 def get_Jaccard_index_from_sparse_connections(iu_counts_dict):
     return {k: ic * 1. / uc
-            for k, (ic, uc) in iu_counts_dict.iteritems()}
+            for k, (ic, uc) in viewitems(iu_counts_dict)}
 
 def get_Jaccard_index(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, dense_input=False):
     base_counts_dict, iu_counts_dict = mtm_stats(connections, chunk_length_64, indices_a, cutoff, start_j, dense_input)

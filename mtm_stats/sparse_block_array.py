@@ -1,4 +1,5 @@
 '''Sparse Block Array Compression'''
+from __future__ import division
 
 import numpy as np
 
@@ -11,7 +12,7 @@ def sba_compress(u8_array, chunk_size):
          array: uint8 array of non-zero chunks (size N x chunk_size)
     '''
     num_bytes = len(u8_array)
-    num_chunks = int(np.ceil(num_bytes * 1. / chunk_size))
+    num_chunks = int(np.ceil(num_bytes / chunk_size))
     bulked = np.zeros((num_chunks, chunk_size), dtype=np.uint8)
     bulked.flat[:u8_array.shape[0]] = u8_array
     ind = np.where(np.sum(bulked, axis=1)!=0)

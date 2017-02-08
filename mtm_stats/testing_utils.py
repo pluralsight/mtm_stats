@@ -1,10 +1,13 @@
 '''Utility functions for use in testing'''
 from __future__ import print_function
 from __future__ import absolute_import
+from builtins import zip
+from builtins import range
+from future.utils import viewitems
 
 import time
 import numpy as np
-from . import mtm_stats
+import mtm_stats
 
 def generate_test_set(sizeA=10000,
                       sizeB = 10000000,
@@ -73,7 +76,7 @@ def naive_counts(connections):
     grouped = mtm_stats.get_grouped_indices(connections, mappingA, mappingB)
     
     base_counts_dict = {setA[ia]: len(ib_list)
-                        for ia, ib_list in grouped.iteritems()}
+                        for ia, ib_list in viewitems(grouped)}
     
     sparse_counts_dict = {}
     for i in range(len(setA)):
@@ -81,7 +84,7 @@ def naive_counts(connections):
             ai, aj = setA[i], setA[j]
             sparse_counts_dict[(aj, ai)] = (len(set(grouped[i]) & set(grouped[j])),
                                             len(set(grouped[i]) | set(grouped[j])))
-    sparse_counts_dict = {k: v for k, v in sparse_counts_dict.iteritems()
+    sparse_counts_dict = {k: v for k, v in viewitems(sparse_counts_dict)
                                if v[0] > 0}
     
     return base_counts_dict, sparse_counts_dict
@@ -98,7 +101,7 @@ def naivest_counts(connections):
         grouped.setdefault(a,[]).append(b)
     
     base_counts_dict = {a: len(b_list)
-                        for a, b_list in grouped.iteritems()}
+                        for a, b_list in viewitems(grouped)}
     
     sparse_counts_dict = {}
     for i in range(len(setA)):
@@ -106,7 +109,7 @@ def naivest_counts(connections):
             ai, aj = setA[i], setA[j]
             sparse_counts_dict[(aj, ai)] = (len(set(grouped[ai]) & set(grouped[aj])),
                                             len(set(grouped[ai]) | set(grouped[aj])))
-    sparse_counts_dict = {k: v for k, v in sparse_counts_dict.iteritems()
+    sparse_counts_dict = {k: v for k, v in viewitems(sparse_counts_dict)
                                if v[0] > 0}
     return base_counts_dict, sparse_counts_dict
 

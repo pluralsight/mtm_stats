@@ -1,4 +1,6 @@
 '''Test it all'''
+from __future__ import division
+from builtins import range
 
 import numpy as np
 import mtm_stats
@@ -51,7 +53,7 @@ def test_mtm_stats_sizeA_1000_sizeB_100000_num_connections_50000():
 def test_get_Jaccard_index_1():
     bcd, ji = mtm_stats.get_Jaccard_index(TEST_SET_1)
     assert bcd == {'a1': 3, 'a3': 1, 'a2': 2, 'a4': 1}
-    assert ji == {('a1', 'a2'): 2./3, ('a1', 'a3'): 1./3}
+    assert ji == {('a1', 'a2'): 2/3, ('a1', 'a3'): 1/3}
 
 def test_get_mtm_dense_vs_sparse_1():
     connections = generate_test_set(sizeA=100,
