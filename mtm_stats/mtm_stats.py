@@ -1,6 +1,7 @@
 '''The main script'''
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import division
 from future.utils import viewitems
 
 # To update with any Cython changes, just run:
@@ -23,7 +24,7 @@ def convert_connections_to_binary(connections, setA, setB):
     mappingA = {p: i for i, p in enumerate(setA)}
     mappingB = {p: i for i, p in enumerate(setB)}
     
-    lenB64 = int(np.ceil(len(setB) * 1. / 64))
+    lenB64 = int(np.ceil(len(setB) / 64))
     output = np.zeros((len(setA), lenB64), np.uint64)
     for a, b in connections:
         ia = mappingA[a]
@@ -43,7 +44,7 @@ def convert_connections_to_sba_list_space_efficient(connections, setA, setB, chu
     mappingA = {p: i for i, p in enumerate(setA)}
     mappingB = {p: i for i, p in enumerate(setB)}
     
-    lenB64 = int(np.ceil(len(setB) * 1. / 64))
+    lenB64 = int(np.ceil(len(setB) / 64))
     tmp_arr = np.empty(lenB64, np.uint64)
     grouped = get_grouped_indices(connections, mappingA, mappingB)
     sba_list = [None] * len(setA)
@@ -88,7 +89,7 @@ def mtm_stats(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=
     return base_counts_dict, iu_counts_dict
 
 def get_Jaccard_index_from_sparse_connections(iu_counts_dict):
-    return {k: ic * 1. / uc
+    return {k: ic / uc
             for k, (ic, uc) in viewitems(iu_counts_dict)}
 
 def get_Jaccard_index(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, dense_input=False):
