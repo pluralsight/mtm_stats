@@ -71,7 +71,7 @@ cdef void set_SBA_from_py_dict(SparseBlockArray * sba, input_dict, sba_ind=0):
     sba[sba_ind].array = <const UINT64 *> array_cn.data
     sba[sba_ind].len = len(locs_cn)
 
-def cy_compute_counts(sba_list, chunk_length, cutoff=0):
+def cy_compute_counts(sba_list, chunk_length):
     '''Wrapper around compute_counts
        Inputs:
         * sba_list: list of sparse block arrays (python format)
@@ -186,13 +186,13 @@ def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutof
                                                               intersection_counts_pointer_arr[thread_number],
                                                               cutoff_c)
         with gil:
-            intersection_counts_list[i] = np.array(intersection_counts_tmp_arr[thread_number][:num_intersection_counts])
+            intersection_counts_list[ii] = np.array(intersection_counts_tmp_arr[thread_number][:num_intersection_counts])
 
     # Collect the results and return
     intersection_counts = np.concatenate(intersection_counts_list)
     return intersection_counts
 
-def cy_compute_counts_dense_input(rows_arr, cutoff=0):
+def cy_compute_counts_dense_input(rows_arr):
     '''Wrapper around compute_counts
        Inputs:
         * sba_list: list of sparse block arrays (python format)
@@ -305,7 +305,7 @@ def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=
                                                                           intersection_counts_pointer_arr[thread_number],
                                                                           cutoff_c)
         with gil:
-            intersection_counts_list[i] = np.array(intersection_counts_tmp_arr[thread_number][:num_intersection_counts])
+            intersection_counts_list[ii] = np.array(intersection_counts_tmp_arr[thread_number][:num_intersection_counts])
 
     # Collect the results and return
     intersection_counts = np.concatenate(intersection_counts_list)
@@ -328,7 +328,7 @@ def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0):
         * intersection_count: number of elements in B that the 
                               A[i] and A[j] share in common
     '''
-    counts = cy_compute_counts(sba_list, chunk_length, cutoff)
+    counts = cy_compute_counts(sba_list, chunk_length)
     intersection_counts = cy_compute_intersection_counts(sba_list, chunk_length, indices_a, cutoff, start_j)
 
     # Return the results from the two sections
@@ -350,7 +350,7 @@ def cy_mtm_stats_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0):
         * intersection_count: number of elements in B that the 
                               A[i] and A[j] share in common
     '''
-    counts = cy_compute_counts_dense_input(rows_arr, cutoff)
+    counts = cy_compute_counts_dense_input(rows_arr)
     intersection_counts = cy_compute_intersection_counts_dense_input(rows_arr, indices_a, cutoff, start_j)
 
     # Return the results from the two sections
