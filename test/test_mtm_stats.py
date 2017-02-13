@@ -28,6 +28,15 @@ def test_mtm_stats_2():
     assert (bcd, scd) == naive_counts(TEST_SET_1)
     assert (bcd, scd) == naivest_counts(TEST_SET_1)
 
+def test_mtm_stats_iterator_1():
+    assert mtm_stats.mtm_stats(TEST_SET_1) == mtm_stats.mtm_stats_from_iterator(TEST_SET_1, 2)
+
+def test_mtm_stats_iterator_2():
+    test_set = generate_test_set(sizeA=143,
+                                 sizeB=157,
+                                 num_connections=20400)
+    assert mtm_stats.mtm_stats(test_set) == mtm_stats.mtm_stats_from_iterator(test_set, 10)
+
 def test_mtm_stats_sizeA_10_sizeB_20_num_connections_20():
     assert is_naive_same(generate_test_set(sizeA=10,
                                            sizeB=20,
@@ -195,6 +204,9 @@ def performance_test_sizeA_10000_sizeB_20000000_num_connections_1000000_chunk_le
 
 if __name__ == '__main__':
     test_mtm_stats_1()
+    test_mtm_stats_2
+    test_mtm_stats_iterator_1()
+    test_mtm_stats_iterator_2()
     test_mtm_stats_sizeA_10_sizeB_20_num_connections_20()
     test_mtm_stats_sizeA_10_sizeB_10_num_connections_100()
     test_mtm_stats_sizeA_100_sizeB_10000_num_connections_10000()
