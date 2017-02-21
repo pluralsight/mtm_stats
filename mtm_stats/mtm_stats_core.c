@@ -152,6 +152,7 @@ int compute_intersection_counts(SparseBlockArray * sba_rows,
     bool result;
     int num_intersection_counts = 0;
     for(j = start_j; j < num_rows; j++) {
+        if(i == j) { continue; } // skip computing the row with itself
         result = compute_intersection_count(sba_rows,
                                             chunk_length,
                                             i,
@@ -220,6 +221,7 @@ int compute_intersection_counts_dense_input(UINT64 * rows_arr,
     bool result;
     int num_intersection_counts = 0;
     for(j = start_j; j < num_rows; j++) {
+        if(i == j) { continue; } // skip computing the row with itself
         result = compute_intersection_count_dense_input(rows_arr,
                                                         chunk_length,
                                                         i,

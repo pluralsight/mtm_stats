@@ -37,6 +37,17 @@ def test_mtm_stats_iterator_2():
                                  num_connections=20400)
     assert mtm_stats.mtm_stats(test_set) == mtm_stats.mtm_stats_from_iterator(test_set, 10)
 
+def test_mtm_stats_upper_only_False_1():
+    test_set = generate_test_set(sizeA=143,
+                                 sizeB=157,
+                                 num_connections=20400)
+    bch, half = mtm_stats.mtm_stats(test_set)
+    bcf, full = mtm_stats.mtm_stats(test_set, upper_only=False)
+    assert bch == bcf
+    assert 2 * len(half) == len(full)
+    assert half == {k: v for k, v in full.items()
+                         if k[0] < k[1]}
+
 def test_mtm_stats_sizeA_10_sizeB_20_num_connections_20():
     assert is_naive_same(generate_test_set(sizeA=10,
                                            sizeB=20,
@@ -207,6 +218,7 @@ if __name__ == '__main__':
     test_mtm_stats_2
     test_mtm_stats_iterator_1()
     test_mtm_stats_iterator_2()
+    test_mtm_stats_upper_only_False_1()
     test_mtm_stats_sizeA_10_sizeB_20_num_connections_20()
     test_mtm_stats_sizeA_10_sizeB_10_num_connections_100()
     test_mtm_stats_sizeA_100_sizeB_10000_num_connections_10000()
