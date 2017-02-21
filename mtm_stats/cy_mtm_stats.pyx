@@ -109,7 +109,7 @@ def cy_compute_counts(sba_list, chunk_length):
     
     return counts
 
-def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0):
+def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0, upper_only=True):
     '''Wrapper around compute_intersection_counts
        Inputs:
         * sba_list: list of sparse block arrays (python format)
@@ -144,6 +144,7 @@ def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutof
     cdef int chunk_length_c = chunk_length
     cdef int cutoff_c = cutoff
     cdef int start_j_c = start_j
+    cdef int upper_only_c = upper_only
     
     # Map the numpy arrays directly to C pointers
     cdef SparseBlockArray * sba_pointer = <SparseBlockArray *> malloc(num_items * sizeof(SparseBlockArray))
@@ -181,7 +182,7 @@ def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutof
         num_intersection_counts = compute_intersection_counts(sba_pointer,
                                                               chunk_length_c,
                                                               i,
-                                                              start_j_c if start_j_c > i else i+1,
+                                                              i+1 if upper_only_c and start_j_c <= i else start_j_c,
                                                               num_items_c,
                                                               intersection_counts_pointer_arr[thread_number],
                                                               cutoff_c)
@@ -229,7 +230,7 @@ def cy_compute_counts_dense_input(rows_arr):
     
     return counts
 
-def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0):
+def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0, upper_only=True):
     '''Wrapper around compute_intersection_counts_dense_input
        Inputs:
         * rows_arr: array of uint64 values with shape (num_rows, chunk_length)
@@ -264,6 +265,7 @@ def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=
     cdef int chunk_length_c = chunk_length
     cdef int cutoff_c = cutoff
     cdef int start_j_c = start_j
+    cdef int upper_only_c = upper_only
     
     # Map the numpy arrays directly to C pointers
     cdef np.ndarray rows_cn
@@ -300,7 +302,7 @@ def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=
         num_intersection_counts = compute_intersection_counts_dense_input(rows_pointer,
                                                                           chunk_length_c,
                                                                           i,
-                                                                          start_j_c if start_j_c > i else i+1,
+                                                                          i+1 if upper_only_c and start_j_c <= i else start_j_c,
                                                                           num_items_c,
                                                                           intersection_counts_pointer_arr[thread_number],
                                                                           cutoff_c)
@@ -312,7 +314,7 @@ def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=
     return intersection_counts
 
 
-def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0):
+def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0, upper_only=True):
     '''Run mtm_stats on 64-bit arrays
        Inputs:
         * sba_list: list of sparse block arrays (python format)
@@ -329,12 +331,12 @@ def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0):
                               A[i] and A[j] share in common
     '''
     counts = cy_compute_counts(sba_list, chunk_length)
-    intersection_counts = cy_compute_intersection_counts(sba_list, chunk_length, indices_a, cutoff, start_j)
+    intersection_counts = cy_compute_intersection_counts(sba_list, chunk_length, indices_a, cutoff, start_j, upper_only)
 
     # Return the results from the two sections
     return counts, intersection_counts
 
-def cy_mtm_stats_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0):
+def cy_mtm_stats_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0, upper_only=True):
     '''Run mtm_stats on 64-bit arrays
        Inputs:
         * sba_list: list of sparse block arrays (python format)
@@ -351,7 +353,7 @@ def cy_mtm_stats_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0):
                               A[i] and A[j] share in common
     '''
     counts = cy_compute_counts_dense_input(rows_arr)
-    intersection_counts = cy_compute_intersection_counts_dense_input(rows_arr, indices_a, cutoff, start_j)
+    intersection_counts = cy_compute_intersection_counts_dense_input(rows_arr, indices_a, cutoff, start_j, upper_only)
 
     # Return the results from the two sections
     return counts, intersection_counts

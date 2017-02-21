@@ -85,20 +85,20 @@ def _mtm_common(connections, chunk_length_64=1, dense_input=False):
     
     return setA, setB, base_counts, rows
 
-def _mtm_intersection_counts(setA, setB, base_counts, rows, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, dense_input=False):
+def _mtm_intersection_counts(setA, setB, base_counts, rows, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, upper_only=True, dense_input=False):
     '''The function that actually calls into cython for the intersection_counts
        Return the intersection_counts'''
     
     if dense_input:
         rows_arr = rows
-        intersection_counts = cy_mtm_stats.cy_compute_intersection_counts_dense_input(rows_arr, indices_a, cutoff, start_j)
+        intersection_counts = cy_mtm_stats.cy_compute_intersection_counts_dense_input(rows_arr, indices_a, cutoff, start_j, upper_only)
     else:
         sba_list = rows
-        intersection_counts = cy_mtm_stats.cy_compute_intersection_counts(sba_list, chunk_length_64, indices_a, cutoff, start_j)
+        intersection_counts = cy_mtm_stats.cy_compute_intersection_counts(sba_list, chunk_length_64, indices_a, cutoff, start_j, upper_only)
     
     return intersection_counts
 
-def mtm_stats_raw(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, dense_input=False):
+def mtm_stats_raw(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, upper_only=True, dense_input=False):
     '''The function that actually calls into cython
        Produces the sets from the connections,
        converts the connection to binary and compresses them into sba's
@@ -107,7 +107,7 @@ def mtm_stats_raw(connections, chunk_length_64=1, indices_a=None, cutoff=0, star
            setA, setB, base_counts, intersection_counts'''
     
     setA, setB, base_counts, rows = _mtm_common(connections, chunk_length_64, dense_input)
-    intersection_counts = _mtm_intersection_counts(setA, setB, base_counts, rows, chunk_length_64, indices_a, cutoff, start_j, dense_input)
+    intersection_counts = _mtm_intersection_counts(setA, setB, base_counts, rows, chunk_length_64, indices_a, cutoff, start_j, upper_only, dense_input)
     return setA, setB, base_counts, intersection_counts
 
 def _partition_range(x, n):
@@ -120,7 +120,7 @@ def _partition_range(x, n):
        '''
     return (range(i, min(x, i+n)) for i in range(0, x, n))
 
-def mtm_stats_raw_iterator(connections, partition_size, chunk_length_64=1, cutoff=0, start_j=0, dense_input=False):
+def mtm_stats_raw_iterator(connections, partition_size, chunk_length_64=1, cutoff=0, start_j=0, upper_only=True, dense_input=False):
     '''This version of mtm_stats returns a generator instead of doing the
        actual intersection_counts calculation
        Each 
@@ -128,7 +128,7 @@ def mtm_stats_raw_iterator(connections, partition_size, chunk_length_64=1, cutof
            setA, setB, base_counts, intersection_counts_generator'''
     
     setA, setB, base_counts, rows = _mtm_common(connections, chunk_length_64, dense_input)
-    intersection_counts_generator = (_mtm_intersection_counts(setA, setB, base_counts, rows, chunk_length_64, indices_a, cutoff, start_j, dense_input)
+    intersection_counts_generator = (_mtm_intersection_counts(setA, setB, base_counts, rows, chunk_length_64, indices_a, cutoff, start_j, upper_only, dense_input)
                                      for indices_a in _partition_range(len(rows), partition_size))
     return setA, setB, base_counts, intersection_counts_generator
 
@@ -148,13 +148,14 @@ def get_iu_counts_gen(base_counts, intersection_counts, setA):
     return ((setA[i], setA[j], ic, base_counts[i] + base_counts[j] - ic)
             for i, j, ic in intersection_counts)
 
-def mtm_stats(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, dense_input=False):
-    setA, setB, base_counts, intersection_counts = mtm_stats_raw(connections, chunk_length_64, indices_a, cutoff, start_j, dense_input)
+def mtm_stats(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, upper_only=True, dense_input=False):
+    '''Get base counts and intersection counts'''
+    setA, setB, base_counts, intersection_counts = mtm_stats_raw(connections, chunk_length_64, indices_a, cutoff, start_j, upper_only, dense_input)
     base_counts_dict = get_base_counts_dict(base_counts, setA)
     iu_counts_dict = get_iu_counts_dict(base_counts, intersection_counts, setA)
     return base_counts_dict, iu_counts_dict
 
-def mtm_stats_iterator(connections, partition_size, chunk_length_64=1, cutoff=0, start_j=0, dense_input=False):
+def mtm_stats_iterator(connections, partition_size, chunk_length_64=1, cutoff=0, start_j=0, upper_only=True, dense_input=False):
     '''Like mtm_stats, but returns generators instead of dicts for performance
        Returns:
          base_counts_generator:
@@ -173,7 +174,7 @@ def mtm_stats_iterator(connections, partition_size, chunk_length_64=1, cutoff=0,
                print("{} and {} have {} things in common and {} things in total from set B".format(item_i, item_j, ic, uc))
        '''
     
-    setA, setB, base_counts, intersection_counts_iterator = mtm_stats_raw_iterator(connections, partition_size, chunk_length_64, cutoff, start_j, dense_input)
+    setA, setB, base_counts, intersection_counts_iterator = mtm_stats_raw_iterator(connections, partition_size, chunk_length_64, cutoff, start_j, upper_only, dense_input)
     base_counts_generator = get_base_counts_gen(base_counts, setA)
     
     iu_counts_double_generator = (get_iu_counts_gen(base_counts, intersection_counts, setA)
@@ -185,16 +186,16 @@ def get_Jaccard_index_from_sparse_connections(iu_counts_dict):
     return {k: ic / uc
             for k, (ic, uc) in viewitems(iu_counts_dict)}
 
-def get_Jaccard_index(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, dense_input=False):
-    base_counts_dict, iu_counts_dict = mtm_stats(connections, chunk_length_64, indices_a, cutoff, start_j, dense_input)
+def get_Jaccard_index(connections, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, upper_only=True, dense_input=False):
+    base_counts_dict, iu_counts_dict = mtm_stats(connections, chunk_length_64, indices_a, cutoff, start_j, upper_only, dense_input)
     jaccard_index = get_Jaccard_index_from_sparse_connections(iu_counts_dict)
     return base_counts_dict, jaccard_index
 
-def mtm_stats_from_iterator(connections, partition_size, chunk_length_64=1, cutoff=0, start_j=0, dense_input=False):
+def mtm_stats_from_iterator(connections, partition_size, chunk_length_64=1, cutoff=0, start_j=0, upper_only=True, dense_input=False):
     '''Same results as regular mtm_stats, but uses mtm_stats_iterator instead
        Mostly useful for testing, although it is not actually that different
        (faster or slower) than the original, so should probably just refactor to always do things this way'''
-    base_counts_generator, iu_counts_double_generator = mtm_stats_iterator(connections, partition_size, chunk_length_64, cutoff, start_j, dense_input)
+    base_counts_generator, iu_counts_double_generator = mtm_stats_iterator(connections, partition_size, chunk_length_64, cutoff, start_j, upper_only, dense_input)
     base_counts_dict = dict(base_counts_generator)
     iu_counts_dict = {(i,j): (ic, uc)
                       for iu_counts_generator in iu_counts_double_generator
