@@ -120,7 +120,7 @@ def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutof
         * start_j: an offset to apply on comparison
           (skip comparing against values less than start_j)
        
-       Returns a numpy structured array with the following fields:
+       Returns a list of numpy structured arrays with the following fields:
         * i, j: pair of indices into set A (set of interest)
         * intersection_count: number of elements in B that the 
                               A[i] and A[j] share in common
@@ -189,9 +189,7 @@ def cy_compute_intersection_counts(sba_list, chunk_length, indices_a=None, cutof
         with gil:
             intersection_counts_list[ii] = np.array(intersection_counts_tmp_arr[thread_number][:num_intersection_counts])
 
-    # Collect the results and return
-    intersection_counts = np.concatenate(intersection_counts_list)
-    return intersection_counts
+    return intersection_counts_list
 
 def cy_compute_counts_dense_input(rows_arr):
     '''Wrapper around compute_counts
@@ -241,7 +239,7 @@ def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=
         * start_j: an offset to apply on comparison
           (skip comparing against values less than start_j)
        
-       Returns a numpy structured array with the following fields:
+       Returns a list of numpy structured arrays with the following fields:
         * i, j: pair of indices into set A (set of interest)
         * intersection_count: number of elements in B that the 
                               A[i] and A[j] share in common
@@ -309,9 +307,7 @@ def cy_compute_intersection_counts_dense_input(rows_arr, indices_a=None, cutoff=
         with gil:
             intersection_counts_list[ii] = np.array(intersection_counts_tmp_arr[thread_number][:num_intersection_counts])
 
-    # Collect the results and return
-    intersection_counts = np.concatenate(intersection_counts_list)
-    return intersection_counts
+    return intersection_counts_list
 
 
 def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0, upper_only=True):
@@ -323,18 +319,21 @@ def cy_mtm_stats(sba_list, chunk_length, indices_a=None, cutoff=0, start_j=0, up
         * chunk_length: sba compression parameter
         * cutoff: maximum size of intersection to keep in the output
        
-       Returns two numpy arrays:
-       A uint32 array with the basic counts
-       A numpy structured array with the following fields:
-        * i, j: pair of indices into set A (set of interest)
-        * intersection_count: number of elements in B that the 
-                              A[i] and A[j] share in common
+       Returns two items:
+       base_counts:
+           A uint32 array with the basic counts
+       
+       intersection_counts_list:
+           A list of numpy structured arrays with the following fields:
+             * i, j: pair of indices into set A (set of interest)
+             * intersection_count: number of elements in B that the 
+                                   A[i] and A[j] share in common
     '''
-    counts = cy_compute_counts(sba_list, chunk_length)
-    intersection_counts = cy_compute_intersection_counts(sba_list, chunk_length, indices_a, cutoff, start_j, upper_only)
+    base_counts = cy_compute_counts(sba_list, chunk_length)
+    intersection_counts_list = cy_compute_intersection_counts(sba_list, chunk_length, indices_a, cutoff, start_j, upper_only)
 
     # Return the results from the two sections
-    return counts, intersection_counts
+    return base_counts, intersection_counts_list
 
 def cy_mtm_stats_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0, upper_only=True):
     '''Run mtm_stats on 64-bit arrays
@@ -345,15 +344,18 @@ def cy_mtm_stats_dense_input(rows_arr, indices_a=None, cutoff=0, start_j=0, uppe
         * chunk_length: sba compression parameter
         * cutoff: maximum size of intersection to keep in the output
        
-       Returns two numpy arrays:
-       A uint32 array with the basic counts
-       A numpy structured array with the following fields:
-        * i, j: pair of indices into set A (set of interest)
-        * intersection_count: number of elements in B that the 
-                              A[i] and A[j] share in common
+       Returns two items:
+       base_counts:
+           A uint32 array with the basic counts
+       
+       intersection_counts_list:
+           A list of numpy structured arrays with the following fields:
+             * i, j: pair of indices into set A (set of interest)
+             * intersection_count: number of elements in B that the 
+                                   A[i] and A[j] share in common
     '''
-    counts = cy_compute_counts_dense_input(rows_arr)
-    intersection_counts = cy_compute_intersection_counts_dense_input(rows_arr, indices_a, cutoff, start_j, upper_only)
+    base_counts = cy_compute_counts_dense_input(rows_arr)
+    intersection_counts_list = cy_compute_intersection_counts_dense_input(rows_arr, indices_a, cutoff, start_j, upper_only)
 
     # Return the results from the two sections
-    return counts, intersection_counts
+    return base_counts, intersection_counts_list
