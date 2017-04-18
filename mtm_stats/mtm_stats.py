@@ -13,10 +13,10 @@ from .sparse_block_array import sba_compress_64
 from . import cy_mtm_stats
 
 def extract_sets_from_connections(connections):
-    '''Get two sorted sets from the connections tuples,
+    '''Get two sorted array sets from the connections tuples,
        one for the first elements and one for the second''' 
-    setA = sorted({i[0] for i in connections})
-    setB = sorted({i[1] for i in connections})
+    setA = np.array(sorted({i[0] for i in connections}))
+    setB = np.array(sorted({i[1] for i in connections}))
     return setA, setB
 
 def convert_connections_to_binary(connections, setA, setB):
@@ -85,7 +85,7 @@ def _mtm_common(connections, chunk_length_64=1, dense_input=False):
     
     return setA, setB, base_counts, rows
 
-def _mtm_intersection_counts(setA, setB, base_counts, rows, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, upper_only=True, dense_input=False):
+def _mtm_intersection_counts(rows, chunk_length_64=1, indices_a=None, cutoff=0, start_j=0, upper_only=True, dense_input=False):
     '''The function that actually calls into cython for the intersection_counts
        Return the intersection_counts_list'''
     
@@ -107,7 +107,7 @@ def mtm_stats_raw(connections, chunk_length_64=1, indices_a=None, cutoff=0, star
            setA, setB, base_counts, intersection_counts_list'''
     
     setA, setB, base_counts, rows = _mtm_common(connections, chunk_length_64, dense_input)
-    intersection_counts_list = _mtm_intersection_counts(setA, setB, base_counts, rows, chunk_length_64, indices_a, cutoff, start_j, upper_only, dense_input)
+    intersection_counts_list = _mtm_intersection_counts(rows, chunk_length_64, indices_a, cutoff, start_j, upper_only, dense_input)
     return setA, setB, base_counts, intersection_counts_list
 
 def _partition_range(x, n):
@@ -128,7 +128,7 @@ def mtm_stats_raw_iterator(connections, partition_size, chunk_length_64=1, cutof
            setA, setB, base_counts, intersection_counts_generator'''
     
     setA, setB, base_counts, rows = _mtm_common(connections, chunk_length_64, dense_input)
-    intersection_counts_generator = (_mtm_intersection_counts(setA, setB, base_counts, rows, chunk_length_64, indices_a, cutoff, start_j, upper_only, dense_input)
+    intersection_counts_generator = (_mtm_intersection_counts(rows, chunk_length_64, indices_a, cutoff, start_j, upper_only, dense_input)
                                      for indices_a in _partition_range(len(rows), partition_size))
     return setA, setB, base_counts, intersection_counts_generator
 
