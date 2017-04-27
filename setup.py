@@ -38,6 +38,7 @@ setup(
     long_description=open('README.md').read(),
     install_requires=['Cpyx>=0.2.2',
                       'numpy>=1.0',
+                      'future>=0.16',
                       'cython>=0.2', # this might need to be newer?
                      ],
     extras_require = {
