@@ -32,7 +32,8 @@ a cutoff filter for small intersections (default is 0).
 If cutoff > 0, any result with intersection count <= cutoff will be approximated as 0.
 The union count is then assumed to be count(A1) + count(A2).
 
-Implementation details:
+### Implementation details:
+
 This module uses a combination of techniques to achieve this goal:
 * Core implemented in C and Cython
 * Bit packing (members of B are each assigned one bit)
@@ -45,7 +46,7 @@ These techniques not only give huge time savings over a brute-force
 implementation, but also cut down on memory usage
 (which could easily crash a machine with a sets as small as 100K elements).
 
-💥
+### Alternative techniques
 
 This technique will work well until the size of N_A^2 becomes unmanagely large.
 In a case like that, you should try a probabalistic algorithm like HyperLogLog, Count Min Sketch or MinHash:
@@ -56,3 +57,41 @@ In a case like that, you should try a probabalistic algorithm like HyperLogLog, 
 Some sample packages to do these kinds of operations are algebird and datasketch:
 * https://github.com/twitter/algebird
 * https://github.com/ekzhu/datasketch
+
+### Installation instructions:
+
+Under Debian systems, all you need to do is the following (or similar):
+
+* sudo apt-get install -y build-essential cmake g++ python python-dev python-setuptools python-numpy
+* sudo easy_install pip
+* sudo pip install numpy Cython
+* sudo pip install mtm_stats
+
+### Special instructions for installation on Mac OS X
+
+This packages uses OpenMP to automatically utilize all available processing cores.
+For this reason, you will need to get gcc (and not clang which lacks OpenMP support).
+
+##### Install Homebrew from https://brew.sh/
+
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+##### Install gcc and cmake
+
+brew install gcc cmake
+
+##### Install numpy and Cython
+
+pip install numpy Cython
+
+##### Set compiler commands and include path environment variables (versions may need to be updated)
+
+export CC=/usr/local/Cellar/gcc/6.3.0_1/bin/gcc-6
+export CXX=/usr/local/Cellar/gcc/6.3.0_1/bin/g++-6
+export C_INCLUDE_PATH=/Users/developers/.virtualenvs/learning_intelligence_data/lib/python2.7/site-packages/numpy/core/include
+
+##### Install the library
+
+pip install mtm_stats
+
+Python 3 is supported, provided the same dependencies are met.
