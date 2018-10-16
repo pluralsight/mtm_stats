@@ -28,6 +28,19 @@ def sba_compress_64(u64_array, chunk_size):
     d['array'] = np.array(d['array'].view(np.uint64).flat)
     return d
 
+def sba_compress_64_index_list(index_list, tmp_uint64_arr, chunk_length_64):
+    '''Compress a set of indices into compressed SBA (Sparse Block Array) format
+
+    index_list is a list of integer indices to be compressed
+    tmp_uint64_arr needs to be a uint64 array with at least as many bits
+    as the largest value in index_list
+    this gets zeroed out and refilled by this function)
+    '''
+    tmp_uint64_arr *= 0
+    for index in index_list:
+        tmp_uint64_arr[index // 64] |= np.uint64(1 << (index % 64))
+    return sba_compress_64(tmp_uint64_arr, chunk_length_64)
+
 def sba_decompress(sba_dict, orig_length):
     '''This is SLOW, only useful for testing
        sba_dict has members 'locs' and 'array'

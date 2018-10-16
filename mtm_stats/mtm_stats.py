@@ -9,7 +9,7 @@ from future.utils import viewitems
 # python setup.py build_ext --inplace
 
 import numpy as np
-from .sparse_block_array import sba_compress_64
+from .sparse_block_array import sba_compress_64, sba_compress_64_index_list
 from . import cy_mtm_stats
 
 def extract_sets_from_connections(connections):
@@ -50,10 +50,7 @@ def convert_connections_to_sba_list_space_efficient(connections, setA, setB, chu
     grouped = get_grouped_indices(connections, mappingA, mappingB)
     sba_list = [None] * len(setA)
     for ia, ib_list in viewitems(grouped):
-        tmp_arr *= 0
-        for ib in ib_list:
-            tmp_arr[ib // 64] |= np.uint64(1 << (ib % 64))
-        sba_list[ia] = sba_compress_64(tmp_arr, chunk_length_64)
+        sba_list[ia] = sba_compress_64_index_list(ib_list, tmp_arr, chunk_length_64)
     
     return sba_list
 
