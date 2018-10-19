@@ -1,4 +1,5 @@
 # Ignore these auto-generated files:
+.vscode
 *.pyc
 *.pyo
 *.so

@@ -3,6 +3,8 @@ import multiprocessing
 from distutils.core import setup
 from distutils.extension import Extension
 
+import numpy as np
+
 from Cython.Build import cythonize
 
 from distutils.command.sdist import sdist as _sdist
@@ -14,7 +16,7 @@ with open("mtm_stats/_version.py") as f:
 extensions = [Extension('mtm_stats.cy_mtm_stats',
                         ['mtm_stats/cy_mtm_stats.pyx',
                          'mtm_stats/mtm_stats_core.c'],
-                        include_dirs=['src'],
+                        include_dirs=['src', np.get_include()],
                         extra_compile_args=['-fPIC','-fopenmp'],
                         extra_link_args=['-fopenmp'])]
 nthreads = multiprocessing.cpu_count()
